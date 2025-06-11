@@ -1,3 +1,6 @@
+[submodule "https://github.com/cloudbonus/obsidian-backup.git"]
+	path = https://github.com/cloudbonus/obsidian-backup.git
+	url = ""
 [submodule "obsidian-backup"]
 	path = obsidian-backup
 	url = https://github.com/cloudbonus/obsidian-backup.git
