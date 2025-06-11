@@ -1,0 +1,3 @@
+[submodule "obsidian-backup"]
+	path = obsidian-backup
+	url = https://github.com/cloudbonus/obsidian-backup.git
