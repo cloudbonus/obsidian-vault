@@ -741,9 +741,9 @@ public class DeadlockExample {
 ### 1. Concurrent Collections
 
 Потокобезопасные аналоги коллекций из `java.util`:
-- [[CopyOnWriteArrayList]] — потокобезопасный `ArrayList`. При изменении создаёт новую копию массива.
-- [[ConcurrentHashMap]] — аналог `HashMap` с сегментированной структурой для параллельного доступа.
-- [[CopyOnWriteArraySet]] — реализация `Set` на основе `CopyOnWriteArrayList`.
+- [CopyOnWriteArrayList](Resources/Concurrent/CopyOnWriteArrayList.md) — потокобезопасный `ArrayList`. При изменении создаёт новую копию массива.
+- [ConcurrentHashMap](Resources/Concurrent/ConcurrentHashMap.md) — аналог `HashMap` с сегментированной структурой для параллельного доступа.
+- [CopyOnWriteArraySet](Resources/Concurrent/CopyOnWriteArraySet.md) — реализация `Set` на основе `CopyOnWriteArrayList`.
 - ConcurrentSkipListMap/SkipListSet — аналоги `TreeMap` и `TreeSet` с поддержкой многопоточности.
 
 Особенности:
@@ -753,31 +753,31 @@ public class DeadlockExample {
 ### 2. Synchronizers
 
 Альтернативы базовой синхронизации (`synchronized`, `wait/notify`):
-- [Semaphore](Resources/Concurrent/Semaphore|Semaphore) — ограничивает количество потоков, обращающихся к ресурсу.
+- [Semaphore](Resources/Concurrent/Semaphore.md) — ограничивает количество потоков, обращающихся к ресурсу.
 
 Визуализация:
 
 ![concurrent-semaphore.gif](Resources/Concurrent/concurrent-semaphore.gif)
 
-- [CountDownLatch](Resources/Concurrent/CountDownLatch|CountDownLatch) — блокирует потоки до выполнения заданного числа условий.
+- [CountDownLatch](Resources/Concurrent/CountDownLatch.md) — блокирует потоки до выполнения заданного числа условий.
 
 Визуализация:
 
 ![concurrent-countdownlatch.gif](Resources/Concurrent/concurrent-countdownlatch.gif)
 
-- [CyclicBarrier](Resources/Concurrent/CyclicBarrier|CyclicBarrier) — синхронизирует потоки в точке "барьера" (многоразовый).
+- [CyclicBarrier](Resources/Concurrent/CyclicBarrier.md) — синхронизирует потоки в точке "барьера" (многоразовый).
 
 Визуализация:
 
 ![concurrent-cyclebarrier.gif](Resources/Concurrent/concurrent-cyclebarrier.gif)
 
-- [Exchanger](Resources/Concurrent/Exchanger|Exchanger) — обмен данными между двумя потоками.
+- [Exchanger](Resources/Concurrent/Exchanger.md) — обмен данными между двумя потоками.
 
 Визуализация:
 
 ![concurrent-exchanger.gif](Resources/Concurrent/concurrent-exchanger.gif)
 
-- [Phaser](Resources/Concurrent/Phaser|Phaser) — расширенный `CyclicBarrier` с поддержкой фаз.
+- [Phaser](Resources/Concurrent/Phaser.md) — расширенный `CyclicBarrier` с поддержкой фаз.
 
 Визуализация:
 
