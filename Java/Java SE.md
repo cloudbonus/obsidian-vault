@@ -180,11 +180,11 @@ public int hashCode() {
 
 Иерархия коллекций:
 
-![[collections.png]]
+![[Resources/Collections/collections.png]]
 
 `Map` — ассоциативный массив:
 
-![[map.png]]
+![[Resources/Collections/map.png]]
 
 Коллекции со сортировкой: `TreeMap`, `TreeSet`, `PriorityQueue`
 Коллекции со сортировкой по вставке: `LinkedHashMap`, `LinkedHashSet`
@@ -286,7 +286,7 @@ ArrayList: ~43000 мс
 
 Весь цикл вставки:
 
-![[800.jpeg]]
+![[Resources/Collections/800.jpeg]]
 
 Алгоритм работы при получении элементов: 
 1. вычисление хеша ключа;
@@ -302,11 +302,11 @@ ArrayList: ~43000 мс
 
 Красно-черное дерево:
 
-![[800 1.jpeg]]
+![[Resources/Collections/800 1.jpeg]]
 
 Красно-черное дерево в `HashMap`:
 
-![[800-1.jpeg]]
+![[Resources/Collections/800-1.jpeg]]
 
 Важные особенности:
 - порядок элементов не гарантируется;
@@ -753,35 +753,35 @@ public class DeadlockExample {
 ### 2. Synchronizers
 
 Альтернативы базовой синхронизации (`synchronized`, `wait/notify`):
-- [[Semaphore]] — ограничивает количество потоков, обращающихся к ресурсу.
+- [[Resources/Concurrent/Semaphore|Semaphore]] — ограничивает количество потоков, обращающихся к ресурсу.
 
 Визуализация:
 
-![[concurrent-semaphore.gif]]
+![[Resources/Concurrent/concurrent-semaphore.gif]]
 
-- [[CountDownLatch]] — блокирует потоки до выполнения заданного числа условий.
-
-Визуализация:
-
-![[concurrent-countdownlatch.gif]]
-
-- [[CyclicBarrier]] — синхронизирует потоки в точке "барьера" (многоразовый).
+- [[Resources/Concurrent/CountDownLatch|CountDownLatch]] — блокирует потоки до выполнения заданного числа условий.
 
 Визуализация:
 
-![[concurrent-cyclebarrier.gif]]
+![[Resources/Concurrent/concurrent-countdownlatch.gif]]
 
-- [[Exchanger]] — обмен данными между двумя потоками.
-
-Визуализация:
-
-![[concurrent-exchanger.gif]]
-
-- [[Phaser]] — расширенный `CyclicBarrier` с поддержкой фаз.
+- [[Resources/Concurrent/CyclicBarrier|CyclicBarrier]] — синхронизирует потоки в точке "барьера" (многоразовый).
 
 Визуализация:
 
-![[concurrent-phaser.gif]]
+![[Resources/Concurrent/concurrent-cyclebarrier.gif]]
+
+- [[Resources/Concurrent/Exchanger|Exchanger]] — обмен данными между двумя потоками.
+
+Визуализация:
+
+![[Resources/Concurrent/concurrent-exchanger.gif]]
+
+- [[Resources/Concurrent/Phaser|Phaser]] — расширенный `CyclicBarrier` с поддержкой фаз.
+
+Визуализация:
+
+![[Resources/Concurrent/concurrent-phaser.gif]]
 
 ### 3. Atomic Classes
 
@@ -832,7 +832,7 @@ public class DeadlockExample {
 
 Области памяти в куче:
 
-![[image.png.webp]]
+![[Resources/JMM/image.png.webp]]
 
 Гипотеза о поколениях:
 - большинство объектов живут очень недолго;
@@ -915,7 +915,7 @@ JSR 133 (New JMM) — определяет новую модель памяти,
 
 Визуализация работы GC:
 
-![[GC-Serial-Type.png]]
+![[Resources/JMM/GC-Serial-Type.png]]
 
 Принцип работы:
 - Minor GC (малая сборка):
@@ -950,7 +950,7 @@ JSR 133 (New JMM) — определяет новую модель памяти,
 
 Визуализация работы GC:
 
-![[GC-Parallel-Type.png]]
+![[Resources/JMM/GC-Parallel-Type.png]]
  
  ### Основные характеристики:
 - многопоточный, использует несколько ядер CPU;
@@ -979,7 +979,7 @@ JSR 133 (New JMM) — определяет новую модель памяти,
 
 Визуализация работы GC:
 
-![[GC-CMS-type.png]]
+![[Resources/JMM/GC-CMS-type.png]]
 
 Основные характеристики:
 - конкурентный сборщик, минимизирует STW-паузы;
@@ -1018,7 +1018,7 @@ JSR 133 (New JMM) — определяет новую модель памяти,
 
 Визуализация работы GC:
 
-![[g1-gc-heap.jpg]]
+![[Resources/JMM/g1-gc-heap.jpg]]
 
 Основные характеристики:
 - современный сборщик, замена CMS;
@@ -1147,7 +1147,7 @@ ZGC — сборщик мусора для Java HotSpot VM, с JDK 15 — produc
 
 Визуализация работы GC:
 
-![[0_tCac0U_wvDjw7Tdj.webp]]
+![[Resources/JMM/0_tCac0U_wvDjw7Tdj.webp]]
 
 Общая информация:
 - тип: конкурентный, low-latency;
@@ -1369,7 +1369,7 @@ ZGC — сборщик мусора для Java HotSpot VM, с JDK 15 — produc
 
 Ход загрузки: 
 
-![[512.jpeg]]
+![[Resources/ClassLoader/512.jpeg]]
 
 Запрос идет "вверх" по иерархии (делегирование), а фактический поиск и загрузка (если класс еще не был загружен) идет "вниз" от того загрузчика, который первым сможет его найти в своих источниках (начиная с `Bootstrap`).
 
