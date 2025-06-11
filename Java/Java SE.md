@@ -180,11 +180,11 @@ public int hashCode() {
 
 Иерархия коллекций:
 
-![[Resources/Collections/collections.png]]
+![collections.png](Resources/Collections/collections.png)
 
 `Map` — ассоциативный массив:
 
-![[Resources/Collections/map.png]]
+![map.png](Resources/Collections/map.png)
 
 Коллекции со сортировкой: `TreeMap`, `TreeSet`, `PriorityQueue`
 Коллекции со сортировкой по вставке: `LinkedHashMap`, `LinkedHashSet`
@@ -286,7 +286,7 @@ ArrayList: ~43000 мс
 
 Весь цикл вставки:
 
-![[Resources/Collections/800.jpeg]]
+![800.jpeg](Resources/Collections/800.jpeg)
 
 Алгоритм работы при получении элементов: 
 1. вычисление хеша ключа;
@@ -302,11 +302,11 @@ ArrayList: ~43000 мс
 
 Красно-черное дерево:
 
-![[Resources/Collections/800 1.jpeg]]
+![800-1.jpeg](Resources/Collections/800-1.jpeg)
 
 Красно-черное дерево в `HashMap`:
 
-![[Resources/Collections/800-1.jpeg]]
+![800-2.jpeg](Resources/Collections/800-2.jpeg)
 
 Важные особенности:
 - порядок элементов не гарантируется;
@@ -753,35 +753,35 @@ public class DeadlockExample {
 ### 2. Synchronizers
 
 Альтернативы базовой синхронизации (`synchronized`, `wait/notify`):
-- [[Resources/Concurrent/Semaphore|Semaphore]] — ограничивает количество потоков, обращающихся к ресурсу.
+- [Semaphore](Resources/Concurrent/Semaphore|Semaphore) — ограничивает количество потоков, обращающихся к ресурсу.
 
 Визуализация:
 
-![[Resources/Concurrent/concurrent-semaphore.gif]]
+![concurrent-semaphore.gif](Resources/Concurrent/concurrent-semaphore.gif)
 
-- [[Resources/Concurrent/CountDownLatch|CountDownLatch]] — блокирует потоки до выполнения заданного числа условий.
-
-Визуализация:
-
-![[Resources/Concurrent/concurrent-countdownlatch.gif]]
-
-- [[Resources/Concurrent/CyclicBarrier|CyclicBarrier]] — синхронизирует потоки в точке "барьера" (многоразовый).
+- [CountDownLatch](Resources/Concurrent/CountDownLatch|CountDownLatch) — блокирует потоки до выполнения заданного числа условий.
 
 Визуализация:
 
-![[Resources/Concurrent/concurrent-cyclebarrier.gif]]
+![concurrent-countdownlatch.gif](Resources/Concurrent/concurrent-countdownlatch.gif)
 
-- [[Resources/Concurrent/Exchanger|Exchanger]] — обмен данными между двумя потоками.
-
-Визуализация:
-
-![[Resources/Concurrent/concurrent-exchanger.gif]]
-
-- [[Resources/Concurrent/Phaser|Phaser]] — расширенный `CyclicBarrier` с поддержкой фаз.
+- [CyclicBarrier](Resources/Concurrent/CyclicBarrier|CyclicBarrier) — синхронизирует потоки в точке "барьера" (многоразовый).
 
 Визуализация:
 
-![[Resources/Concurrent/concurrent-phaser.gif]]
+![concurrent-cyclebarrier.gif](Resources/Concurrent/concurrent-cyclebarrier.gif)
+
+- [Exchanger](Resources/Concurrent/Exchanger|Exchanger) — обмен данными между двумя потоками.
+
+Визуализация:
+
+![concurrent-exchanger.gif](Resources/Concurrent/concurrent-exchanger.gif)
+
+- [Phaser](Resources/Concurrent/Phaser|Phaser) — расширенный `CyclicBarrier` с поддержкой фаз.
+
+Визуализация:
+
+![concurrent-phaser.gif](Resources/Concurrent/concurrent-phaser.gif)
 
 ### 3. Atomic Classes
 
@@ -832,7 +832,7 @@ public class DeadlockExample {
 
 Области памяти в куче:
 
-![[Resources/JMM/image.png.webp]]
+![image.png.webp](Resources/JMM/image.png.webp)
 
 Гипотеза о поколениях:
 - большинство объектов живут очень недолго;
@@ -915,7 +915,7 @@ JSR 133 (New JMM) — определяет новую модель памяти,
 
 Визуализация работы GC:
 
-![[Resources/JMM/GC-Serial-Type.png]]
+![GC-Serial-Type.png](Resources/JMM/GC-Serial-Type.png)
 
 Принцип работы:
 - Minor GC (малая сборка):
@@ -950,7 +950,7 @@ JSR 133 (New JMM) — определяет новую модель памяти,
 
 Визуализация работы GC:
 
-![[Resources/JMM/GC-Parallel-Type.png]]
+![GC-Parallel-Type.png](Resources/JMM/GC-Parallel-Type.png)
  
  ### Основные характеристики:
 - многопоточный, использует несколько ядер CPU;
@@ -979,7 +979,7 @@ JSR 133 (New JMM) — определяет новую модель памяти,
 
 Визуализация работы GC:
 
-![[Resources/JMM/GC-CMS-type.png]]
+![GC-CMS-type.png](Resources/JMM/GC-CMS-type.png)
 
 Основные характеристики:
 - конкурентный сборщик, минимизирует STW-паузы;
@@ -1018,7 +1018,7 @@ JSR 133 (New JMM) — определяет новую модель памяти,
 
 Визуализация работы GC:
 
-![[Resources/JMM/g1-gc-heap.jpg]]
+![g1-gc-heap.jpg](Resources/JMM/g1-gc-heap.jpg)
 
 Основные характеристики:
 - современный сборщик, замена CMS;
@@ -1147,7 +1147,7 @@ ZGC — сборщик мусора для Java HotSpot VM, с JDK 15 — produc
 
 Визуализация работы GC:
 
-![[Resources/JMM/0_tCac0U_wvDjw7Tdj.webp]]
+![0_tCac0U_wvDjw7Tdj.webp](Resources/JMM/0_tCac0U_wvDjw7Tdj.webp)
 
 Общая информация:
 - тип: конкурентный, low-latency;
@@ -1369,7 +1369,7 @@ ZGC — сборщик мусора для Java HotSpot VM, с JDK 15 — produc
 
 Ход загрузки: 
 
-![[Resources/ClassLoader/512.jpeg]]
+![512.jpeg](Resources/ClassLoader/512.jpeg)
 
 Запрос идет "вверх" по иерархии (делегирование), а фактический поиск и загрузка (если класс еще не был загружен) идет "вниз" от того загрузчика, который первым сможет его найти в своих источниках (начиная с `Bootstrap`).
 
