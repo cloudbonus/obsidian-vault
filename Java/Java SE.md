@@ -733,6 +733,10 @@ public class DeadlockExample {
 }
 ```
 
+### IllegalMonitorStateException
+
+IllegalMonitorStateException в Java возникает в многопоточном программировании. Это исключение сигнализирует, что поток попытался вызвать `wait()`, `notify()` или `notifyAll()` для монитора, которым он не владеет. Проще говоря, ошибка появляется, если эти методы вызываются вне блока `synchronized`.  
+
 ---
 ## Пакет `java.util.concurrent`
 
