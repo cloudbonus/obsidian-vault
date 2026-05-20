@@ -152,3 +152,460 @@ AspectJ может перехватывать практически всё:
 2. нужно перехватить вызов конструктора или доступ к полю;
 3. нужно применить аспект к final классу/методу;
 4. вы обнаружили, что оверхед от прокси является узким местом в производительности вашего приложения.
+
+---
+
+## Основная терминология AOP
+
+| Термин | Описание |
+|--------|----------|
+| **Aspect (Аспект)** | Модуль или класс, реализующий сквозную функциональность. Изменяет поведение остального кода, применяя совет в точках соединения, определённых срезом. |
+| **Advice (Совет)** | Фрагмент кода, который должен выполняться в отдельной точке соединения. Может быть выполнен до, после или вместо точки соединения. |
+| **Joinpoint (Точка соединения)** | Чётко определённая точка в выполняемой программе, где следует применить совет. Примеры: вызов метода, инициализация класса, создание экземпляра объекта. |
+| **Pointcut (Срез)** | Набор точек соединения. Определяет, подходит ли данная точка соединения к данному совету. |
+| **Weaving (Связывание)** | Процесс вставки аспектов в определённую точку кода приложения. Может происходить на этапе компиляции, загрузки или выполнения. |
+| **Target (Цель)** | Объект, поток выполнения которого изменяется процессом AOP. |
+| **Introduction (Внедрение)** | Процесс изменения структуры объекта за счёт введения дополнительных методов или полей. |
+
+---
+
+## IoC и DI
+
+**IoC (Inversion of Control)** — принцип проектирования, который переносит ответственность за создание и управление объектами из вызывающего кода в среду исполнения. При использовании IoC контейнер управляет жизненным циклом объектов и определяет, какие классы должны быть созданы и когда. Таким образом, IoC отделяет создание объектов от их использования.
+
+**DI (Dependency Injection)** — конкретная реализация принципа IoC, которая использует механизмы (конструкторы или методы) для внедрения зависимостей в объекты. Зависимости передаются в виде параметров в конструктор или метод объекта, вместо того чтобы объект сам создавал эти зависимости. DI позволяет избавиться от жёстких зависимостей между классами и сделать код более гибким и модульным.
+
+### Реализации IoC
+
+Помимо DI, существуют и другие реализации принципа IoC:
+- **Factory** — фабричный метод/абстрактная фабрика для создания объектов;
+- **Service Locator** — объект знает, где и как получить зависимости (противоположность DI);
+- **Contextualized lookup** — поиск зависимостей через контекст.
+
+### DI в Spring
+
+В Spring DI реализуется через:
+- **Constructor injection** — предпочтительный способ. Гарантирует неизменность, обеспечивает тестируемость, явно указывает обязательные зависимости;
+- **Setter injection** — для опциональных зависимостей;
+- **Field injection** — через `@Autowired` (не рекомендуется для нового кода).
+
+Лучший способ в современном Spring — использовать `@RequiredArgsConstructor` из Lombok вместе с `final`-полями:
+
+```java
+@Service
+@RequiredArgsConstructor
+public class UserService {
+    private final UserRepository userRepository;
+    private final EmailService emailService;
+}
+```
+
+Преимущества конструкторной инъекции:
+1. **Гарантирует неизменность** — зависимости передаются при создании объекта и не могут быть изменены;
+2. **Обеспечивает тестируемость** — легко использовать mock-объекты без рефлексии;
+3. **Явно указывает обязательные зависимости** — нет риска `NullPointerException`;
+4. **Позволяет использовать final** — поля могут быть неизменяемыми.
+
+---
+
+## Жизненный цикл бина
+
+```mermaid
+flowchart LR
+    A[Инстанцирование] --> B[Наделение свойствами]
+    B --> C[Постобработка бина]
+    C --> D[Инициализация]
+    D --> E[Использование]
+    E --> F[Уничтожение]
+```
+
+1. **Инстанцирование** — создание экземпляра бина через конструктор, фабричный метод или `FactoryBean.getObject()`;
+2. **Наделение свойствами** — Spring устанавливает свойства и зависимости (DI);
+3. **Постобработка бина** — применяются `BeanPostProcessor` (`postProcessBeforeInitialization`);
+4. **Инициализация** — вызывается init-метод бина (если определён), `@PostConstruct`;
+5. **Использование** — бин доступен для использования в приложении;
+6. **Уничтожение** — при закрытии контекста вызывается destroy-метод (`@PreDestroy`), освобождаются ресурсы.
+
+---
+
+## Scopes бинов
+
+| Scope | Описание |
+|-------|----------|
+| **singleton** | (Default) Один экземпляр бина на каждый Spring IoC контейнер. |
+| **prototype** | Новый экземпляр при каждом запросе бина. |
+| **request** | Один экземпляр на один HTTP-запрос. Только для web-aware контекста. |
+| **session** | Один экземпляр на одну HTTP-сессию. Только для web-aware контекста. |
+| **application** | Один экземпляр на один `ServletContext`. Только для web-aware контекста. |
+| **websocket** | Один экземпляр на один WebSocket. Только для web-aware контекста. |
+
+---
+
+## @Controller vs @RestController
+
+`@RestController = @Controller + @ResponseBody`
+
+- `@Controller` — помечает класс как Spring MVC контроллер. Возвращает имя View для рендеринга.
+- `@RestController` — все методы по умолчанию возвращают данные (JSON/XML) в тело ответа через `HttpMessageConverter` (обычно Jackson).
+
+### @ResponseBody vs ResponseEntity
+
+- `@ResponseBody` — автоматически сериализует возвращаемое значение в тело HTTP-ответа. Статус всегда 200 (или 500 при ошибке);
+- `ResponseEntity` — позволяет полностью контролировать HTTP-ответ: статус-код, заголовки, тело.
+
+Используйте `ResponseEntity`, когда нужно вернуть специфический статус (201 Created, 204 No Content) или кастомные заголовки.
+
+---
+
+## Spring Boot
+
+Spring Boot — расширение Spring, которое устраняет необходимость в рутинных настройках:
+
+1. **Starter-зависимости** — готовые наборы зависимостей (`spring-boot-starter-web`, `spring-boot-starter-data-jpa`);
+2. **Встроенный сервер** — Tomcat/Jetty/Undertow встроены, упрощает развёртывание;
+3. **Автоконфигурация** — Spring Boot автоматически настраивает бины на основе classpath и properties;
+4. **Actuator** — готовые endpoints для мониторинга (`/health`, `/metrics`, `/info`).
+
+### Создание стартера
+
+Starter — набор зависимостей и готовых автоконфигураций. Позволяет избежать ручного создания бинов.
+
+Для создания:
+1. Создать в ресурсах `META-INF/spring.factories` (или `META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports` в Spring Boot 2.7+);
+2. Определить автоконфигурацию:
+
+```properties
+org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
+com.example.MyAutoConfiguration
+```
+
+3. Создать класс конфигурации с условными бинами (`@ConditionalOnClass`, `@ConditionalOnMissingBean`).
+
+---
+
+## i18n (Internationalization)
+
+Spring Boot предоставляет встроенную поддержку локализации через `MessageSource`.
+
+### Базовая настройка
+
+1. Создать файлы переводов в `src/main/resources`:
+   - `messages.properties` — fallback по умолчанию
+   - `messages_en.properties` — английский
+   - `messages_fr.properties` — французский
+
+2. Spring Boot автоматически конфигурирует `MessageSource` при наличии файлов `messages*.properties`.
+
+3. Настройка в `application.properties`:
+
+```properties
+spring.messages.basename=messages
+spring.messages.encoding=UTF-8
+spring.messages.fallback-to-system-locale=true
+```
+
+### Использование в REST
+
+```java
+@RestController
+@RequiredArgsConstructor
+public class GreetingController {
+    private final MessageSource messageSource;
+
+    @GetMapping("/api/greet")
+    public String greet(@RequestHeader(name = "Accept-Language", required = false) Locale locale) {
+        return messageSource.getMessage("greeting.message", null, locale);
+    }
+}
+```
+
+По умолчанию Spring использует `AcceptHeaderLocaleResolver` — определяет локаль из HTTP-заголовка `Accept-Language`.
+
+---
+
+## Spring Security: полное руководство
+
+### Аутентификация и авторизация
+
+- **Аутентификация** — процесс проверки личности пользователя (логин/пароль, токен, сертификат);
+- **Авторизация** — определение, какие действия пользователь может выполнять.
+
+### JWT (JSON Web Token)
+
+**Аутентификация с JWT:**
+1. Клиент отправляет учётные данные на `/login`;
+2. Сервер проверяет данные и создаёт JWT, содержащий claims (username, roles);
+3. Клиент сохраняет JWT (localStorage/sessionStorage) и отправляет в заголовке `Authorization: Bearer <token>`.
+
+**Авторизация с JWT:**
+1. Spring Security фильтр перехватывает запрос, проверяет токен;
+2. Если валиден — извлекаются роли, создаётся объект `Authentication`;
+3. Запрос выполняется с правами пользователя;
+4. Если токен недействителен — `401 Unauthorized`.
+
+### Access Token и Refresh Token
+
+| Токен | Назначение | Время жизни |
+|-------|-----------|-------------|
+| **Access Token** | Предоставляет доступ к защищённым ресурсам | Короткое (минуты) |
+| **Refresh Token** | Используется для обновления Access Token без повторной аутентификации | Долгое (дни/недели) |
+
+### CSRF / CORS / XSS
+
+| Угроза | Описание | Защита |
+|--------|----------|--------|
+| **CSRF** | Атака, при которой злоумышленник отправляет запрос от имени авторизованного пользователя | CSRF-токен в формах, отключение для stateless API |
+| **CORS** | Механизм, позволяющий веб-страницам запрашивать ресурсы с другого домена | Настройка `CorsConfigurationSource`, разрешённые origins |
+| **XSS** | Внедрение вредоносного скрипта в веб-страницы | Экранирование вывода, Content Security Policy |
+
+### Spring Security Filter Chain
+
+Цепочка фильтров, обрабатывающих запросы перед контроллером:
+- `SecurityContextPersistenceFilter` — восстановление `SecurityContext`;
+- `UsernamePasswordAuthenticationFilter` — аутентификация по логину/паролю;
+- `ExceptionTranslationFilter` — обработка исключений безопасности;
+- `FilterSecurityInterceptor` — авторизация доступа к ресурсу.
+
+### Аннотации авторизации
+
+- `@PreAuthorize("hasRole('ADMIN')")` — проверка перед выполнением метода;
+- `@PostAuthorize` — проверка после выполнения;
+- `@Secured("ROLE_ADMIN")` — устаревшая альтернатива;
+- `@RolesAllowed` — стандарт Java EE.
+
+---
+
+## Spring Transactions: Propagation
+
+Propagation определяет поведение транзакции при вызове из другой транзакции.
+
+| Propagation | Вызов из `@Transactional` | Вызов без `@Transactional` |
+|-------------|---------------------------|----------------------------|
+| **REQUIRED** (default) | Использует существующую транзакцию | Создаёт новую транзакцию |
+| **REQUIRES_NEW** | Создаёт отдельную транзакцию, внешняя приостанавливается | Создаёт новую транзакцию |
+| **SUPPORTS** | Использует существующую транзакцию | Выполняется без транзакции (auto-commit) |
+| **NOT_SUPPORTED** | Выполняется вне транзакции, существующая приостанавливается | Выполняется без транзакции |
+| **NEVER** | Выбрасывает исключение | Выполняется без транзакции |
+| **MANDATORY** | Использует существующую транзакцию | Выбрасывает исключение |
+| **NESTED** | Создаёт nested-транзакцию (savepoint) | Создаёт новую транзакцию |
+
+### Рулбеки
+
+По умолчанию Spring откатывает транзакцию только при unchecked исключениях (`RuntimeException`).
+
+- `rollbackFor` — исключения, при которых транзакция БУДЕТ откатана;
+- `noRollbackFor` — исключения, при которых транзакция НЕ будет откатана;
+- `readOnly = true` — оптимизация: подсказывает, что транзакция только читает данные.
+
+### Физические и логические транзакции
+
+- **Physical transaction** — реальная JDBC-транзакция (`Connection.setAutoCommit(false)`);
+- **Logical transaction** — `@Transactional`-метод в Spring. Несколько logical транзакций могут быть объединены в одну physical.
+
+Когда `@Transactional` метод вызывает другой `@Transactional` метод:
+- С `REQUIRED` — одна physical транзакция;
+- С `REQUIRES_NEW` — две physical транзакции.
+
+---
+
+## Этапы инициализации контекста (итог)
+
+```mermaid
+flowchart LR
+    A[BeanDefinitionReader] -->|парсит конфиги| B[Map BeanName -> BeanDefinition]
+    B -->|BeanFactoryPostProcessor| C[настройка definition]
+    C -->|BeanFactory| D[создание бинов]
+    D -->|BeanPostProcessor| E[настройка бинов]
+    E --> F[контекст готов]
+```
+
+1. `BeanDefinitionReader` парсит конфигурацию и создаёт `BeanDefinition`;
+2. `BeanFactoryPostProcessor` настраивает definitions до создания бинов (например, `@Value` из properties);
+3. `BeanFactory` создаёт экземпляры бинов;
+4. `BeanPostProcessor` настраивает созданные бины до попадания в контекст (AOP, `@Transactional` прокси).
+
+---
+
+## Дополнительные возможности Spring
+
+### RestTemplate и Feign
+
+**RestTemplate** — синхронный HTTP-клиент Spring:
+
+```java
+RestTemplate restTemplate = new RestTemplate();
+User user = restTemplate.getForObject("https://api.example.com/users/{id}", User.class, 1L);
+```
+
+Устарел в пользу `RestClient` (Spring 6.1+) или `WebClient` (реактивный).
+
+**OpenFeign** — декларативный HTTP-клиент:
+
+```java
+@FeignClient(name = "userService", url = "https://api.example.com")
+public interface UserClient {
+    @GetMapping("/users/{id}")
+    User getUser(@PathVariable Long id);
+}
+```
+
+### JdbcTemplate
+
+Упрощает работу с JDBC, устраняя бойлерплейт:
+
+```java
+@Repository
+@RequiredArgsConstructor
+public class UserJdbcDao {
+    private final JdbcTemplate jdbcTemplate;
+
+    public User findById(Long id) {
+        return jdbcTemplate.queryForObject(
+            "SELECT id, name FROM users WHERE id = ?",
+            (rs, rowNum) -> new User(rs.getLong("id"), rs.getString("name")),
+            id
+        );
+    }
+}
+```
+
+### Обработка исключений: @ControllerAdvice
+
+Глобальная обработка исключений:
+
+```java
+@RestControllerAdvice
+public class GlobalExceptionHandler {
+    @ExceptionHandler(UserNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleUserNotFound(UserNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            .body(new ErrorResponse(ex.getMessage(), LocalDateTime.now()));
+    }
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<Map<String, String>> handleValidationErrors(MethodArgumentNotValidException ex) {
+        Map<String, String> errors = new HashMap<>();
+        ex.getBindingResult().getFieldErrors().forEach(error ->
+            errors.put(error.getField(), error.getDefaultMessage()));
+        return ResponseEntity.badRequest().body(errors);
+    }
+}
+```
+
+### Работа по расписанию: @Scheduled
+
+```java
+@Service
+public class ReportService {
+    @Scheduled(cron = "0 0 6 * * MON")  // Каждый понедельник в 6:00
+    public void weeklyReport() { /* ... */ }
+
+    @Scheduled(fixedRate = 60000)       // Каждую минуту
+    public void healthCheck() { /* ... */ }
+}
+```
+
+Требует `@EnableScheduling` в конфигурации.
+
+### Кэширование
+
+```java
+@Service
+@RequiredArgsConstructor
+public class ProductService {
+    private final ProductRepository repository;
+
+    @Cacheable(value = "products", key = "#id")
+    public Product findById(Long id) {
+        return repository.findById(id).orElseThrow();
+    }
+
+    @CacheEvict(value = "products", key = "#product.id")
+    public Product update(Product product) {
+        return repository.save(product);
+    }
+
+    @CacheEvict(value = "products", allEntries = true)
+    public void clearCache() { }
+}
+```
+
+Требует `@EnableCaching` и настройки провайдера (Caffeine, Redis, EhCache).
+
+### События и слушатели
+
+```java
+// Событие
+public class UserRegisteredEvent extends ApplicationEvent {
+    private final Long userId;
+    public UserRegisteredEvent(Object source, Long userId) { super(source); this.userId = userId; }
+}
+
+// Публикация
+@Service
+@RequiredArgsConstructor
+public class UserService {
+    private final ApplicationEventPublisher publisher;
+
+    public void register(UserDto dto) {
+        // ... сохранение
+        publisher.publishEvent(new UserRegisteredEvent(this, savedUser.getId()));
+    }
+}
+
+// Слушатель
+@Component
+public class UserEventListener {
+    @EventListener
+    @Async  // асинхронная обработка
+    public void handleUserRegistered(UserRegisteredEvent event) {
+        // отправка email, логирование и т.д.
+    }
+}
+```
+
+### Асинхронность: @Async
+
+```java
+@Service
+public class NotificationService {
+    @Async("taskExecutor")  // можно указать конкретный Executor
+    public CompletableFuture<Void> sendEmail(String to, String subject) {
+        // длительная операция
+        return CompletableFuture.completedFuture(null);
+    }
+}
+```
+
+Требует `@EnableAsync` и настройку `TaskExecutor`.
+
+### Настройки Tomcat
+
+По умолчанию Spring Boot (starter-web) использует встроенный Tomcat:
+- **Без нагрузки**: создаёт 10 потоков (`server.tomcat.threads.min-spare`);
+- **Под нагрузкой**: масштабируется до 200 потоков (`server.tomcat.threads.max`).
+
+```yaml
+server:
+  tomcat:
+    threads:
+      max: 200
+      min-spare: 10
+```
+
+### Жизненный цикл бина: коллбэки
+
+Помимо `BeanPostProcessor`, можно использовать стандартные коллбэки:
+
+| Коллбэк | Когда вызывается |
+|---------|---------------|
+| `@PostConstruct` | После создания бина и DI, но до использования |
+| `InitializingBean.afterPropertiesSet()` | Аналог `@PostConstruct` |
+| `@PreDestroy` | Перед уничтожением бина |
+| `DisposableBean.destroy()` | Аналог `@PreDestroy` |
+
+Порядок вызова:
+1. `BeanPostProcessor.postProcessBeforeInitialization()`
+2. `@PostConstruct`
+3. `InitializingBean.afterPropertiesSet()`
+4. `BeanPostProcessor.postProcessAfterInitialization()`
