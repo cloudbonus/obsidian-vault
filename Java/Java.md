@@ -701,15 +701,24 @@ IllegalMonitorStateException в Java возникает в многопоточ�
 
 Альтернативы базовой синхронизации (`synchronized`, `wait/notify`):
 - [Semaphore](Concurrent/Semaphore.md) — ограничивает количество потоков, обращающихся к ресурсу.
-![Semaphore Visualization](Resources/concurrent-semaphore.gif)
+
+  ![Semaphore Visualization](Resources/concurrent-semaphore.gif)
+
 - [CountDownLatch](Concurrent/CountDownLatch.md) — блокирует потоки до выполнения заданного числа условий.
-![CountDownLatch Visualization](Resources/concurrent-countdownlatch.gif)
+
+  ![CountDownLatch Visualization](Resources/concurrent-countdownlatch.gif)
+
 - [CyclicBarrier](Concurrent/CyclicBarrier.md) — синхронизирует потоки в точке "барьера" (многоразовый).
-![CyclicBarrier Visualization](Resources/concurrent-cyclebarrier.gif)
+
+  ![CyclicBarrier Visualization](Resources/concurrent-cyclebarrier.gif)
+
 - [Exchanger](Concurrent/Exchanger.md) — обмен данными между двумя потоками.
-![Exchanger Visualization](Resources/concurrent-exchanger.gif)
+
+  ![Exchanger Visualization](Resources/concurrent-exchanger.gif)
+
 - [Phaser](Concurrent/Phaser.md) — расширенный `CyclicBarrier` с поддержкой фаз.
-![Phaser Visualization](Resources/concurrent-phaser.gif)
+
+  ![Phaser Visualization](Resources/concurrent-phaser.gif)
 
 ### 3. Atomic Classes
 
