@@ -100,7 +100,7 @@ Content-Length: 27
 
 ## REST vs SOAP
 
-| | REST | SOAP |
+| Критерий | REST | SOAP |
 |---|------|------|
 | Протокол | HTTP | Любой транспорт (HTTP, SMTP, TCP) |
 | Формат | JSON, XML, и др. | Только XML |

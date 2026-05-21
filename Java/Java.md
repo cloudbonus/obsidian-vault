@@ -802,24 +802,24 @@ IllegalMonitorStateException в Java возникает в многопоточ�
 
 ## Сложности операций над деревьями
 
-| Tree type | | Average | Worst |
-|-----------|-----------|-----------|-----------|
+| Tree type | Operation | Average | Worst |
+|-----------|-----------|---------|-------|
 | **Binary search tree** | Space | Θ(n) | O(n) |
-| | Insert | Θ(log n) | O(n) |
-| | Search | Θ(log n) | O(n) |
-| | Delete | Θ(log n) | O(n) |
+| **Binary search tree** | Insert | Θ(log n) | O(n) |
+| **Binary search tree** | Search | Θ(log n) | O(n) |
+| **Binary search tree** | Delete | Θ(log n) | O(n) |
 | **Red black tree** | Space | O(n) | O(n) |
-| | Insert | O(log n) | O(log n) |
-| | Search | O(log n) | O(log n) |
-| | Delete | O(log n) | O(log n) |
+| **Red black tree** | Insert | O(log n) | O(log n) |
+| **Red black tree** | Search | O(log n) | O(log n) |
+| **Red black tree** | Delete | O(log n) | O(log n) |
 | **AVL tree** | Space | O(n) | O(n) |
-| | Insert | O(log n) | O(log n) |
-| | Search | O(log n) | O(log n) |
-| | Delete | O(log n) | O(log n) |
+| **AVL tree** | Insert | O(log n) | O(log n) |
+| **AVL tree** | Search | O(log n) | O(log n) |
+| **AVL tree** | Delete | O(log n) | O(log n) |
 | **B-tree** | Space | O(n) | O(n) |
-| | Insert | O(log n) | O(log n) |
-| | Search | O(log n) | O(log n) |
-| | Delete | O(log n) | O(log n) |
+| **B-tree** | Insert | O(log n) | O(log n) |
+| **B-tree** | Search | O(log n) | O(log n) |
+| **B-tree** | Delete | O(log n) | O(log n) |
 
 - **BST** — несбалансированное дерево, в худшем случае вырождается в список;
 - **Red-Black tree** — самобалансирующееся дерево, гарантирует O(log n) для всех операций;
@@ -1087,8 +1087,8 @@ JMM определяет, как потоки видят изменения пе
 ---
 ## Serializable и Externalizable
 
-| | `Serializable` | `Externalizable` |
-| ------------------ | ------------------------------------ | -------------------------------------------------- |
+| Характеристика | `Serializable` | `Externalizable` |
+|----------------|------------------------------------|--------------------------------------------------|
 | Контроль | JVM управляет процессом | Ручная реализация `writeExternal()` / `readExternal()` |
 | Производительность | Ниже | Выше |
 | Конструктор | Не требуется | Публичный без параметров — обязателен |
@@ -1628,7 +1628,7 @@ CompletableFuture.anyOf(f1, f2, f3)        // ждёт любого
 
 ### Отличия от платформенных потоков
 
-| | Платформенные потоки | Виртуальные потоки |
+| Характеристика | Платформенные потоки | Виртуальные потоки |
 |---|---------------------|-------------------|
 | **Управление** | ОС | JVM |
 | **Размер стека** | Фиксированный (~1 MB) | Динамический (как корутины) |
