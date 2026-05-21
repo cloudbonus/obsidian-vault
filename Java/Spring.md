@@ -224,7 +224,7 @@ flowchart LR
     subgraph Initialization [3. INITIALIZATION]
         direction TB
         Before(BeanPostProcessor<br/>beforeInitialization):::step3
-        Init1(@PostConstruct):::step3
+        Init1("@PostConstruct"):::step3
         Init2(InitializingBean<br/>afterPropertiesSet):::step3
         Init3(custom init):::step3
         After(BeanPostProcessor<br/>afterInitialization):::step3
@@ -235,7 +235,7 @@ flowchart LR
     end
 
     subgraph Destruction [5. DESTRUCTION]
-        D1(@PreDestroy):::step5
+        D1("@PreDestroy"):::step5
         D2(DisposableBean<br/>destroy):::step5
         D3(custom destroy):::step5
     end
