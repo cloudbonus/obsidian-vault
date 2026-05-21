@@ -179,11 +179,11 @@ public int hashCode() {
 
 Иерархия коллекций:
 
-![[Java/Resources/java-collections-hierarchy.png]]
+![Java Collections Hierarchy](Resources/java-collections-hierarchy.png)
 
 Иерархия Map:
 
-![[Java/Resources/java-map-hierarchy.png]]
+![Java Map Hierarchy](Resources/java-map-hierarchy.png)
 
 Коллекции со сортировкой: `TreeMap`, `TreeSet`, `PriorityQueue`
 Коллекции со сортировкой по вставке: `LinkedHashMap`, `LinkedHashSet`
@@ -294,15 +294,15 @@ ArrayList: ~43000 мс
 
 Массив бакетов (при capacity=16):
 
-![[Java/Resources/hashmap-buckets-array.png]]
+![HashMap Buckets Array](Resources/hashmap-buckets-array.png)
 
 Красно-чёрное дерево (после treeify):
 
-![[Java/Resources/hashmap-red-black-tree.png]]
+![HashMap Red-Black Tree](Resources/hashmap-red-black-tree.png)
 
 Структура TreeNode:
 
-![[Java/Resources/hashmap-treenode-structure.png]]
+![HashMap TreeNode Structure](Resources/hashmap-treenode-structure.png)
 
 Условия для дерева: 
 - если в бакете ≥8 элементов и размер таблицы ≥64, список преобразуется в красно-черное дерево (для сохранения производительности `O(log n)`); 
@@ -386,7 +386,7 @@ TreeMap — реализация интерфейса `NavigableMap`, храня
 
 Типы ошибок:
 
-![[Java/Resources/java-exceptions-hierarchy.png]]
+![Java Exceptions Hierarchy](Resources/java-exceptions-hierarchy.png)
 
 Блок `finally` всегда выполняется перед оператором `return` из других блоков, поэтому он может вернуть значение раньше, чем будет выброшена ошибка. Однако `finally` не выполнится в следующих случаях:
 - произойдет завершение работы JVM, например, при вызове `System.exit(0)` или при остановке системы (halt);
@@ -495,7 +495,7 @@ CAS — неблокирующий механизм обновления зна�
 
 Жизненный цикл потока:
 
-![[Java/Resources/java-thread-lifecycle.png]]
+![Java Thread Lifecycle](Resources/java-thread-lifecycle.png)
 
 Основные понятия многопоточности:
 - **Процесс** — изолированный экземпляр программы со своим адресным пространством;
@@ -701,15 +701,15 @@ IllegalMonitorStateException в Java возникает в многопоточ�
 
 Альтернативы базовой синхронизации (`synchronized`, `wait/notify`):
 - [Semaphore](Concurrent/Semaphore.md) — ограничивает количество потоков, обращающихся к ресурсу.
-![[Java/Resources/concurrent-semaphore.gif]]
+![Semaphore Visualization](Resources/concurrent-semaphore.gif)
 - [CountDownLatch](Concurrent/CountDownLatch.md) — блокирует потоки до выполнения заданного числа условий.
-![[Java/Resources/concurrent-countdownlatch.gif]]
+![CountDownLatch Visualization](Resources/concurrent-countdownlatch.gif)
 - [CyclicBarrier](Concurrent/CyclicBarrier.md) — синхронизирует потоки в точке "барьера" (многоразовый).
-![[Java/Resources/concurrent-cyclebarrier.gif]]
+![CyclicBarrier Visualization](Resources/concurrent-cyclebarrier.gif)
 - [Exchanger](Concurrent/Exchanger.md) — обмен данными между двумя потоками.
-![[Java/Resources/concurrent-exchanger.gif]]
+![Exchanger Visualization](Resources/concurrent-exchanger.gif)
 - [Phaser](Concurrent/Phaser.md) — расширенный `CyclicBarrier` с поддержкой фаз.
-![[Java/Resources/concurrent-phaser.gif]]
+![Phaser Visualization](Resources/concurrent-phaser.gif)
 
 ### 3. Atomic Classes
 
@@ -760,7 +760,7 @@ IllegalMonitorStateException в Java возникает в многопоточ�
 
 Области памяти в куче:
 
-![[Java/Resources/jvm-heap-memory-areas.png]]
+![JVM Heap Memory Areas](Resources/jvm-heap-memory-areas.png)
 
 Гипотеза о поколениях:
 - большинство объектов живут очень недолго;
@@ -863,7 +863,7 @@ JMM определяет, как потоки видят изменения пе
 - **Minor GC** — копирует выжившие из Eden/Survivor в другой Survivor;
 - **Full GC** — Mark-Sweep-Compact по всей куче.
 
-![[Java/Resources/serial-gc-algorithm.png]]
+![Serial GC Algorithm](Resources/serial-gc-algorithm.png)
 
 Настройки: `-Xms` / `-Xmx`, `-XX:NewRatio`, `-XX:SurvivorRatio`.
 
@@ -874,7 +874,7 @@ JMM определяет, как потоки видят изменения пе
 - Minor и Full GC в нескольких потоках — меньше STW-пауз, чем Serial;
 - автоподстройка размеров регионов.
 
-![[Java/Resources/parallel-gc-algorithm.png]]
+![Parallel GC Algorithm](Resources/parallel-gc-algorithm.png)
 
 Настройки: `-XX:ParallelGCThreads`, `-XX:MaxGCPauseMillis`, `-XX:GCTimeRatio`.
 
@@ -888,7 +888,7 @@ JMM определяет, как потоки видят изменения пе
 - удаление без уплотнения → фрагментация;
 - Concurrent Mode Failure — если не успевает, падает в полный STW.
 
-![[Java/Resources/cms-gc-phases.png]]
+![CMS GC Phases](Resources/cms-gc-phases.png)
 
 ### 4. G1
 
@@ -898,7 +898,7 @@ JMM определяет, как потоки видят изменения пе
 - **Mixed GC** — Concurrent Marking + очистка Young + часть Old;
 - **Full GC** — STW, если не хватает памяти.
 
-![[Java/Resources/g1-gc-regions.png]]
+![G1 GC Regions](Resources/g1-gc-regions.png)
 
 Настройки: `-XX:MaxGCPauseMillis`, `-XX:G1HeapRegionSize`, `-XX:InitiatingHeapOccupancyPercent`.
 
@@ -921,7 +921,7 @@ JMM определяет, как потоки видят изменения пе
 - барьеры в потоках приложения обновляют указатели;
 - поддержка куч до 16 ТБ.
 
-![[Java/Resources/zgc-colored-pointers.png]]
+![ZGC Colored Pointers](Resources/zgc-colored-pointers.png)
 
 Минусы: накладные расходы на барьеры, требует больше памяти.
 
@@ -1076,7 +1076,7 @@ JMM определяет, как потоки видят изменения пе
 
 Ход загрузки (Delegation Model):
 
-![[Java/Resources/classloader-delegation-model.png]]
+![ClassLoader Delegation Model](Resources/classloader-delegation-model.png)
 
 Запрос идет "вверх" по иерархии (делегирование), а фактический поиск и загрузка (если класс еще не был загружен) идет "вниз" от того загрузчика, который первым сможет его найти в своих источниках (начиная с `Bootstrap`).
 

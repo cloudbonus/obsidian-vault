@@ -11,7 +11,7 @@
 ```
 obsidian-vault/
 ├── Java/
-│   ├── Java.md              # Java SE
+│   ├── Java.md              # Java SE (Core, OOP, Collections, Concurrency, JMM, GC)
 │   ├── Spring.md            # Spring Framework & Boot
 │   ├── DB-SQL.md            # SQL и реляционные БД
 │   ├── DB-ORM.md            # JPA / Hibernate
@@ -19,7 +19,8 @@ obsidian-vault/
 │   ├── DevOps.md            # DevOps инструменты
 │   ├── HTTP & Web.md        # Сети и веб
 │   ├── Testing.md           # Тестирование
-│   └── Resources/           # Изображения, диаграммы, скриншоты
+│   ├── Concurrent/          # Примеры кода: синхронизаторы и concurrent-коллекции
+│   └── Resources/           # Изображения, диаграммы, гифки
 └── README.md                # Этот файл
 ```
 

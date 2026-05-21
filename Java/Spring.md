@@ -52,7 +52,7 @@ Dispatcher Servlet — это центральный компонент в Sprin
 
 Принцип работы:
 
-![[Java/Resources/spring-dispatcher-servlet-workflow.png]]
+![Spring Dispatcher Servlet Workflow](Resources/spring-dispatcher-servlet-workflow.png)
 
 ---
 ## Сервлет
