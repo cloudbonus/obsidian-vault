@@ -1,3 +1,4 @@
+
 ## Maven BOM
 
 Maven BOM — это особый тип POM-файла, предназначенный для управления группой зависимостей и их версиями. Он используется для обеспечения совместимости всех зависимостей внутри одной группы (например, модулей Spring или Hibernate). Применение BOM упрощает управление зависимостями и предотвращает конфликты версий.
@@ -7,7 +8,10 @@ Maven BOM — это особый тип POM-файла, предназначе�
 
 Основные этапы поднятия ApplicationContext:
 
-![0bcceb8429a61045baa91c6caeb84908.png](Resources/Spring/0bcceb8429a61045baa91c6caeb84908.png)
+1. `BeanDefinitionReader` парсит конфигурацию и создаёт `BeanDefinition`;
+2. `BeanFactoryPostProcessor` настраивает definitions до создания бинов (например, `@Value` из properties);
+3. `BeanFactory` создаёт экземпляры бинов;
+4. `BeanPostProcessor` настраивает созданные бины до попадания в контекст (AOP, `@Transactional` прокси).
 
 ### 1. Сбор и парсинг конфигурации (создание `BeanDefinition`)
 
@@ -25,10 +29,6 @@ Maven BOM — это особый тип POM-файла, предназначе�
 
 ### 4. Инстанцирование бинов (создание экземпляров)
 На этом этапе `BeanFactory` создает реальные объекты на основе подготовленных `BeanDefinition`. Для обычных бинов используется подходящий способ создания (конструктор, фабричный метод и т.п.), а для `FactoryBean` вызывается метод `getObject()`. Таким образом формируются готовые к использованию экземпляры, которые затем переходят на следующий этап — постобработку.
-
-Процесс инстанцирования бина:
-
-![5c69d6853d00726067868447d414e478.png](Resources/Spring/5c69d6853d00726067868447d414e478.png)
 
 ### 5. Постобработка созданных бинов (`BeanPostProcessor`)
 
@@ -52,7 +52,7 @@ Dispatcher Servlet — это центральный компонент в Sprin
 
 Принцип работы:
 
-![Pasted image 20250613132918.png](Resources/Spring/20250613132918.png)
+![[Java/Resources/spring-dispatcher-servlet-workflow.png]]
 
 ---
 ## Сервлет
@@ -212,11 +212,57 @@ public class UserService {
 
 ```mermaid
 flowchart LR
-    A[Инстанцирование] --> B[Наделение свойствами]
-    B --> C[Постобработка бина]
-    C --> D[Инициализация]
-    D --> E[Использование]
-    E --> F[Уничтожение]
+    subgraph Instantiation [1. INSTANTIATE BEAN]
+        I(Instantiate Bean):::step1
+    end
+
+    subgraph Populate [2. POPULATE PROPERTIES]
+        P1(Populate Properties):::step2
+        P2(Aware Interfaces):::step2
+    end
+
+    subgraph Initialization [3. INITIALIZATION]
+        direction TB
+        Before(BeanPostProcessor<br/>beforeInitialization):::step3
+        Init1(@PostConstruct):::step3
+        Init2(InitializingBean<br/>afterPropertiesSet):::step3
+        Init3(custom init):::step3
+        After(BeanPostProcessor<br/>afterInitialization):::step3
+    end
+
+    subgraph Readiness [4. BEAN IS READY TO USE]
+        Ready(Ready):::step4
+    end
+
+    subgraph Destruction [5. DESTRUCTION]
+        D1(@PreDestroy):::step5
+        D2(DisposableBean<br/>destroy):::step5
+        D3(custom destroy):::step5
+    end
+
+    I --> P1
+    P1 --> P2
+    P2 --> Before
+    Before --> Init1
+    Init1 --> Init2
+    Init2 --> Init3
+    Init3 --> After
+    After --> Ready
+    Ready --> D1
+    D1 --> D2
+    D2 --> D3
+
+    classDef step1 fill:#e1f5fe,stroke:#01579b,stroke-width:2px;
+    classDef step2 fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px;
+    classDef step3 fill:#fff9c4,stroke:#f57f17,stroke-width:2px;
+    classDef step4 fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px;
+    classDef step5 fill:#ffebee,stroke:#c62828,stroke-width:2px;
+
+    class I step1;
+    class P1,P2 step2;
+    class Before,Init1,Init2,Init3,After step3;
+    class Ready step4;
+    class D1,D2,D3 step5;
 ```
 
 1. **Инстанцирование** — создание экземпляра бина через конструктор, фабричный метод или `FactoryBean.getObject()`;
@@ -225,6 +271,23 @@ flowchart LR
 4. **Инициализация** — вызывается init-метод бина (если определён), `@PostConstruct`;
 5. **Использование** — бин доступен для использования в приложении;
 6. **Уничтожение** — при закрытии контекста вызывается destroy-метод (`@PreDestroy`), освобождаются ресурсы.
+
+### Коллбэки инициализации и уничтожения
+
+Помимо `BeanPostProcessor`, можно использовать стандартные коллбэки:
+
+| Коллбэк | Когда вызывается |
+|---------|---------------|
+| `@PostConstruct` | После создания бина и DI, но до использования |
+| `InitializingBean.afterPropertiesSet()` | Аналог `@PostConstruct` |
+| `@PreDestroy` | Перед уничтожением бина |
+| `DisposableBean.destroy()` | Аналог `@PreDestroy` |
+
+Порядок вызова инициализации:
+1. `BeanPostProcessor.postProcessBeforeInitialization()`
+2. `@PostConstruct`
+3. `InitializingBean.afterPropertiesSet()`
+4. `BeanPostProcessor.postProcessAfterInitialization()`
 
 ---
 
@@ -408,24 +471,6 @@ Propagation определяет поведение транзакции при 
 
 ---
 
-## Этапы инициализации контекста (итог)
-
-```mermaid
-flowchart LR
-    A[BeanDefinitionReader] -->|парсит конфиги| B[Map BeanName -> BeanDefinition]
-    B -->|BeanFactoryPostProcessor| C[настройка definition]
-    C -->|BeanFactory| D[создание бинов]
-    D -->|BeanPostProcessor| E[настройка бинов]
-    E --> F[контекст готов]
-```
-
-1. `BeanDefinitionReader` парсит конфигурацию и создаёт `BeanDefinition`;
-2. `BeanFactoryPostProcessor` настраивает definitions до создания бинов (например, `@Value` из properties);
-3. `BeanFactory` создаёт экземпляры бинов;
-4. `BeanPostProcessor` настраивает созданные бины до попадания в контекст (AOP, `@Transactional` прокси).
-
----
-
 ## Дополнительные возможности Spring
 
 ### RestTemplate и Feign
@@ -593,19 +638,3 @@ server:
       min-spare: 10
 ```
 
-### Жизненный цикл бина: коллбэки
-
-Помимо `BeanPostProcessor`, можно использовать стандартные коллбэки:
-
-| Коллбэк | Когда вызывается |
-|---------|---------------|
-| `@PostConstruct` | После создания бина и DI, но до использования |
-| `InitializingBean.afterPropertiesSet()` | Аналог `@PostConstruct` |
-| `@PreDestroy` | Перед уничтожением бина |
-| `DisposableBean.destroy()` | Аналог `@PreDestroy` |
-
-Порядок вызова:
-1. `BeanPostProcessor.postProcessBeforeInitialization()`
-2. `@PostConstruct`
-3. `InitializingBean.afterPropertiesSet()`
-4. `BeanPostProcessor.postProcessAfterInitialization()`

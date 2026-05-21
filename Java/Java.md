@@ -9,17 +9,69 @@
 ---
 ## GRASP
 
-GRASP — 9 принципов:
-1. **Information Expert** — ответственность у того, кто владеет информацией.
-2. **Creator** — создаёт тот, кто использует / агрегирует / знает, как инициализировать.
-3. **Controller** — посредник между UI и бизнес-логикой.
-4. **Low Coupling** — слабая связанность между объектами.
-5. **High Cohesion (Высокая сцепленность) — объект должен быть сфокусирован на одной задаче. Пример: вместо класса `Data` с методами для времени и температуры — разделить на `TimeData` и `TemperatureData`.
+GRASP выделяет следующие 9 принципов-шаблонов:
 
-6. **Pure Fabrication** — искусственный класс для высокой сцепленности.
-7. **Indirection** — посредник для снижения связанности.
-8. **Protected Variations** — абстракции скрывают изменяемые части.
-9. **Polymorphism** — обработка разных типов через общий интерфейс.
+1. **Information Expert (Информационный эксперт)** — ответственность за выполнение операций возлагается на тот класс, который обладает всей необходимой информацией для их выполнения.
+2. **Creator (Создатель)** — объект получает ответственность за создание другого объекта, если он его использует, агрегирует или знает, как его инициализировать.
+3. **Controller (Контроллер)** — посредник между пользовательским интерфейсом и бизнес-логикой, управляющий обработкой входящих запросов от UI.
+4. **Low Coupling (Слабая связанность)** — объекты должны быть слабо связаны между собой, чтобы изменения в одном минимально затрагивали другие.
+5. **High Cohesion (Высокая сцепленность)** — объект должен быть сфокусирован на выполнении одной задачи или группы тесно связанных задач, что упрощает поддержку и понимание.
+
+   Пример нарушения:
+
+   ```java
+   @AllArgsConstructor
+   public class Data {
+       private int temperature;
+       private int time;
+
+       private int calculateTimeDifference(int time) {
+           return this.time - time;
+       }
+
+       private int calculateTemperatureDifference(int temperature) {
+           return this.temperature - temperature;
+       }
+   }
+   ```
+
+   Пример соблюдения:
+
+   ```java
+   @AllArgsConstructor
+   public class Data {
+       private TemperatureData temperatureData;
+       private TimeData timeData;
+
+       public Data(int time, int temperature) {
+           this.temperatureData = new TemperatureData(temperature);
+           this.timeData = new TimeData(time);
+       }
+   }
+
+   @AllArgsConstructor
+   public class TimeData {
+       private int time;
+
+       private int calculateTimeDifference(int time) {
+           return this.time - time;
+       }
+   }
+
+   @AllArgsConstructor
+   public class TemperatureData {
+       private int temperature;
+
+       private int calculateTemperatureDifference(int temperature) {
+           return this.temperature - temperature;
+       }
+   }
+   ```
+
+6. **Pure Fabrication (Чистая выдумка)** — искусственно созданный класс, не отражающий сущности предметной области, но обеспечивающий высокую сцепленность и низкую связанность.
+7. **Indirection (Посредник)** — введение посредника между компонентами снижает связанность и упрощает замену или расширение поведения.
+8. **Protected Variations (Защищённые изменения)** — стабильность системы достигается через абстракции, скрывающие потенциально изменяемые части от остального кода.
+9. **Polymorphism (Полиморфизм)** — позволяет обрабатывать объекты разных типов через общий интерфейс, обеспечивая гибкость в реализации альтернативных поведений.
 
 ---
 ## Контракт `equals()` и `hashCode()`
@@ -91,6 +143,15 @@ public int hashCode() {
 }
 ```
 
+Общие правила для вычисления хеш-кода по типам полей:
+- `boolean`: `f ? 1 : 0`;
+- `int`: `(int) f`;
+- `long`: `(int)(f ^ (f >>> 32))`;
+- `float`: `Float.floatToIntBits(f)`;
+- `double`: сначала преобразовать в `long`, затем по правилу для `long`;
+- `Object`: `f.hashCode()`, или `0`, если `f == null`;
+- массивы: использовать `Arrays.hashCode(...)` или `Arrays.deepHashCode(...)` для вложенных структур.
+
 Практические рекомендации:
 - всегда переопределяйте `hashCode()` при переопределении `equals()`;
 - используйте одни и те же поля для обоих методов;
@@ -118,11 +179,11 @@ public int hashCode() {
 
 Иерархия коллекций:
 
-![collections.png](Resources/Collections/collections.png)
+![[Java/Resources/java-collections-hierarchy.png]]
 
-`Map` — ассоциативный массив:
+Иерархия Map:
 
-![map.png](Resources/Collections/map.png)
+![[Java/Resources/java-map-hierarchy.png]]
 
 Коллекции со сортировкой: `TreeMap`, `TreeSet`, `PriorityQueue`
 Коллекции со сортировкой по вставке: `LinkedHashMap`, `LinkedHashSet`
@@ -222,10 +283,6 @@ ArrayList: ~43000 мс
 		- иначе элемент добавляется в конец списка или дерева. 
 4. если `size > threshold`, вызывается `resize()` (удвоение размера + перехеширование).
 
-Весь цикл вставки:
-
-![800.jpeg](Resources/Collections/800.jpeg)
-
 Алгоритм работы при получении элементов: 
 1. вычисление хеша ключа;
 2. поиск в бакете:
@@ -233,18 +290,24 @@ ArrayList: ~43000 мс
 	- если список/дерево – последовательный обход. 
 3. для деревьев используется `getTreeNode()` с поиском по хешам и `compareTo()`. 
 
+**Внутренняя структура HashMap:**
+
+Массив бакетов (при capacity=16):
+
+![[Java/Resources/hashmap-buckets-array.png]]
+
+Красно-чёрное дерево (после treeify):
+
+![[Java/Resources/hashmap-red-black-tree.png]]
+
+Структура TreeNode:
+
+![[Java/Resources/hashmap-treenode-structure.png]]
+
 Условия для дерева: 
 - если в бакете ≥8 элементов и размер таблицы ≥64, список преобразуется в красно-черное дерево (для сохранения производительности `O(log n)`); 
 - балансировка дерева происходит при вставке/удалении;
 - при уменьшении элементов в бакете до 6 дерево преобразуется обратно в список. 
-
-Красно-черное дерево:
-
-![800-1.jpeg](Resources/Collections/800-1.jpeg)
-
-Красно-черное дерево в `HashMap`:
-
-![800-2.jpeg](Resources/Collections/800-2.jpeg)
 
 Важные особенности:
 - порядок элементов не гарантируется;
@@ -308,14 +371,22 @@ TreeMap — реализация интерфейса `NavigableMap`, храня
 - Fail Fast! — немедленно остановить работу при ошибке (лучше на этапе разработки);
 - Fail Safe! — обработать ошибку и продолжить работу (важно в критичных системах и продакшене).
 
-> Fail Fast на этапе разработки; Fail Safe или гибрид — в критичных системах (медицина, банки, космос).
+Польза Fail Fast для качества кода:
+- позволяет быстро обнаруживать и исправлять ошибки на ранних этапах;
+- снижает затраты на отладку и поддержку;
+- помогает писать более надёжный код;
+- предотвращает серьёзные сбои и катастрофы в продакшене.
+
+Рекомендации по применению Fail Fast:
+- на этапе разработки — применять всегда;
+- в продакшене — по умолчанию применять, кроме критических систем (медицина, банки, космос), где важна отказоустойчивость и минимизация ущерба (там используют Fail Safe или гибридные подходы).
 
 ---
 ## Исключения
 
 Типы ошибок:
 
-![](https://lh7-rt.googleusercontent.com/docsz/AD_4nXco609zdesmg0o9BawGeJ20ZJJOOc1_cUWyx3OADcyZCTF_XCJbJZEiq7-5rqKQ_StzNDN141U0JJNufWZ7g1DLZ74rgXw9RNp2Mzrj5l6FuiDEoO-p6GT6-L6kdLkUtsTqe7cFLyVTG_lNc8kkkjyVbss?key=GLq7sYVjQHhGxwbWqwq00w)
+![[Java/Resources/java-exceptions-hierarchy.png]]
 
 Блок `finally` всегда выполняется перед оператором `return` из других блоков, поэтому он может вернуть значение раньше, чем будет выброшена ошибка. Однако `finally` не выполнится в следующих случаях:
 - произойдет завершение работы JVM, например, при вызове `System.exit(0)` или при остановке системы (halt);
@@ -424,7 +495,7 @@ CAS — неблокирующий механизм обновления зна�
 
 Жизненный цикл потока:
 
-![](https://lh7-rt.googleusercontent.com/docsz/AD_4nXetQtJFREnWn8EcYwFMwgTu7Jb9Nvp5EBWwoeJX-6LgphoGVOATuGdFM7OaQBzRl-kZHiShQBS2HyG4giIbmUPPtANIIlx1F2Mo3JX9pTc0BQ5LiBhaiHQNAwFzYygKtmnnuKFyeqlB36M8xXpSoLjNzj6B?key=GLq7sYVjQHhGxwbWqwq00w)
+![[Java/Resources/java-thread-lifecycle.png]]
 
 Основные понятия многопоточности:
 - **Процесс** — изолированный экземпляр программы со своим адресным пространством;
@@ -617,9 +688,9 @@ IllegalMonitorStateException в Java возникает в многопоточ�
 ### 1. Concurrent Collections
 
 Потокобезопасные аналоги коллекций из `java.util`:
-- [CopyOnWriteArrayList](Resources/Concurrent/CopyOnWriteArrayList.md) — потокобезопасный `ArrayList`. При изменении создаёт новую копию массива.
-- [ConcurrentHashMap](Resources/Concurrent/ConcurrentHashMap.md) — аналог `HashMap` с сегментированной структурой для параллельного доступа.
-- [CopyOnWriteArraySet](Resources/Concurrent/CopyOnWriteArraySet.md) — реализация `Set` на основе `CopyOnWriteArrayList`.
+- [CopyOnWriteArrayList](Concurrent/CopyOnWriteArrayList.md) — потокобезопасный `ArrayList`. При изменении создаёт новую копию массива.
+- [ConcurrentHashMap](Concurrent/ConcurrentHashMap.md) — аналог `HashMap` с сегментированной структурой для параллельного доступа.
+- [CopyOnWriteArraySet](Concurrent/CopyOnWriteArraySet.md) — реализация `Set` на основе `CopyOnWriteArrayList`.
 - ConcurrentSkipListMap/SkipListSet — аналоги `TreeMap` и `TreeSet` с поддержкой многопоточности.
 
 Особенности:
@@ -629,35 +700,16 @@ IllegalMonitorStateException в Java возникает в многопоточ�
 ### 2. Synchronizers
 
 Альтернативы базовой синхронизации (`synchronized`, `wait/notify`):
-- [Semaphore](Resources/Concurrent/Semaphore.md) — ограничивает количество потоков, обращающихся к ресурсу.
-
-Визуализация:
-
-![concurrent-semaphore.gif](Resources/Concurrent/concurrent-semaphore.gif)
-
-- [CountDownLatch](Resources/Concurrent/CountDownLatch.md) — блокирует потоки до выполнения заданного числа условий.
-
-Визуализация:
-
-![concurrent-countdownlatch.gif](Resources/Concurrent/concurrent-countdownlatch.gif)
-
-- [CyclicBarrier](Resources/Concurrent/CyclicBarrier.md) — синхронизирует потоки в точке "барьера" (многоразовый).
-
-Визуализация:
-
-![concurrent-cyclebarrier.gif](Resources/Concurrent/concurrent-cyclebarrier.gif)
-
-- [Exchanger](Resources/Concurrent/Exchanger.md) — обмен данными между двумя потоками.
-
-Визуализация:
-
-![concurrent-exchanger.gif](Resources/Concurrent/concurrent-exchanger.gif)
-
-- [Phaser](Resources/Concurrent/Phaser.md) — расширенный `CyclicBarrier` с поддержкой фаз.
-
-Визуализация:
-
-![concurrent-phaser.gif](Resources/Concurrent/concurrent-phaser.gif)
+- [Semaphore](Concurrent/Semaphore.md) — ограничивает количество потоков, обращающихся к ресурсу.
+![[Java/Resources/concurrent-semaphore.gif]]
+- [CountDownLatch](Concurrent/CountDownLatch.md) — блокирует потоки до выполнения заданного числа условий.
+![[Java/Resources/concurrent-countdownlatch.gif]]
+- [CyclicBarrier](Concurrent/CyclicBarrier.md) — синхронизирует потоки в точке "барьера" (многоразовый).
+![[Java/Resources/concurrent-cyclebarrier.gif]]
+- [Exchanger](Concurrent/Exchanger.md) — обмен данными между двумя потоками.
+![[Java/Resources/concurrent-exchanger.gif]]
+- [Phaser](Concurrent/Phaser.md) — расширенный `CyclicBarrier` с поддержкой фаз.
+![[Java/Resources/concurrent-phaser.gif]]
 
 ### 3. Atomic Classes
 
@@ -708,7 +760,7 @@ IllegalMonitorStateException в Java возникает в многопоточ�
 
 Области памяти в куче:
 
-![image.png.webp](Resources/JMM/image.png.webp)
+![[Java/Resources/jvm-heap-memory-areas.png]]
 
 Гипотеза о поколениях:
 - большинство объектов живут очень недолго;
@@ -811,6 +863,8 @@ JMM определяет, как потоки видят изменения пе
 - **Minor GC** — копирует выжившие из Eden/Survivor в другой Survivor;
 - **Full GC** — Mark-Sweep-Compact по всей куче.
 
+![[Java/Resources/serial-gc-algorithm.png]]
+
 Настройки: `-Xms` / `-Xmx`, `-XX:NewRatio`, `-XX:SurvivorRatio`.
 
 ### 2. Parallel GC
@@ -819,6 +873,8 @@ JMM определяет, как потоки видят изменения пе
 
 - Minor и Full GC в нескольких потоках — меньше STW-пауз, чем Serial;
 - автоподстройка размеров регионов.
+
+![[Java/Resources/parallel-gc-algorithm.png]]
 
 Настройки: `-XX:ParallelGCThreads`, `-XX:MaxGCPauseMillis`, `-XX:GCTimeRatio`.
 
@@ -832,6 +888,8 @@ JMM определяет, как потоки видят изменения пе
 - удаление без уплотнения → фрагментация;
 - Concurrent Mode Failure — если не успевает, падает в полный STW.
 
+![[Java/Resources/cms-gc-phases.png]]
+
 ### 4. G1
 
 Современный сборщик, замена CMS. Флаг: `-XX:+UseG1GC`. Регионы по 1–32 МБ вместо фиксированных поколений.
@@ -839,6 +897,8 @@ JMM определяет, как потоки видят изменения пе
 - **Young GC** (STW) — очищает самые "мусорные" регионы;
 - **Mixed GC** — Concurrent Marking + очистка Young + часть Old;
 - **Full GC** — STW, если не хватает памяти.
+
+![[Java/Resources/g1-gc-regions.png]]
 
 Настройки: `-XX:MaxGCPauseMillis`, `-XX:G1HeapRegionSize`, `-XX:InitiatingHeapOccupancyPercent`.
 
@@ -860,6 +920,8 @@ JMM определяет, как потоки видят изменения пе
 - **Цветные указатели** (colored pointers) + виртуальная память — перемещение объектов без STW;
 - барьеры в потоках приложения обновляют указатели;
 - поддержка куч до 16 ТБ.
+
+![[Java/Resources/zgc-colored-pointers.png]]
 
 Минусы: накладные расходы на барьеры, требует больше памяти.
 
@@ -919,11 +981,11 @@ JMM определяет, как потоки видят изменения пе
 
 Проверить метрики в Grafana/Prometheus: CPU Usage, JVM Thread Live, JVM Thread States, JVM Threads Daemon. Возможные причины: утечки потоков, интенсивные RUNNABLE-потоки, неправильное использование concurrency.
  
-### 2. Действия при переполнение Heap (OutOfMemoryError)
+### 2. Действия при переполнении Heap (OutOfMemoryError)
 
 Проверить метрики: JVM Heap Memory Usage, JVM GC Live Data, JVM GC Time. Цели анализа: найти объекты, удерживаемые в памяти дольше положенного, найти крупные коллекции, утечки, чрезмерное кэширование, построить Dominator Tree, посмотреть retained size.
 
-### 3. Действия при проблемах связанных с подключениями к базе данных
+### 3. Действия при проблемах, связанных с подключениями к базе данных
 
 Проверить метрики в Grafana: DB Connection Pool Usage, DB Connection Wait Time, DB Query Time. Если используется HikariCP — настроить параметры:
 - `maximumPoolSize` — максимальное число соединений;
@@ -978,7 +1040,7 @@ JMM определяет, как потоки видят изменения пе
 	* поиск запрошенного класса среди уже загруженных;
 	* получение байт-кода для загрузки;
 	* проверка корректности байт-кода;
-	* моздание экземпляра класса `java.lang.Class` (для работы с классом в runtime);
+  	* создание экземпляра класса `java.lang.Class` (для работы с классом в runtime);
 	* загрузка родительских классов и интерфейсов. (Если они не загружены, текущий класс тоже считается не загруженным).
 
 2. Связывание (Linking / Линковка):
@@ -1012,9 +1074,9 @@ JMM определяет, как потоки видят изменения пе
 2. **Видимость** — загрузчик видит только свои классы и классы предков.
 3. **Уникальность** — класс + загрузчик определяют уникальность; один класс не загружается дважды в одной иерархии.
 
-Ход загрузки: 
+Ход загрузки (Delegation Model):
 
-![512.jpeg](Resources/ClassLoader/512.jpeg)
+![[Java/Resources/classloader-delegation-model.png]]
 
 Запрос идет "вверх" по иерархии (делегирование), а фактический поиск и загрузка (если класс еще не был загружен) идет "вниз" от того загрузчика, который первым сможет его найти в своих источниках (начиная с `Bootstrap`).
 
@@ -1040,7 +1102,7 @@ JMM определяет, как потоки видят изменения пе
 - без дженериков: код требовал ручных проверок и приведения типов;
 - риск: `ClassCastException` во время выполнения, если в коллекцию попал объект не того типа.
 
-С дженериками (`List<Account>`) тип коллекции задается при объявлении, добавяляя типобезопасность на этапе компиляции. Компилятор не позволит добавить в `List<Account>` объект другого типа и сам выполняет неявное приведение типов. 
+С дженериками (`List<Account>`) тип коллекции задается при объявлении, добавляя типобезопасность на этапе компиляции. Компилятор не позволит добавить в `List<Account>` объект другого типа и сам выполняет неявное приведение типов. 
 
 Принцип подстановки Лисков: объект подтипа (наследника) можно использовать везде, где ожидается объект супертипа (родителя), без нарушения работы программы. Пример: `Number n = Integer.valueOf(42); (Integer — подтип Number)`.
 
@@ -1221,7 +1283,7 @@ Java (гибридный подход):
 
 JVM не компилирует весь код сразу. Она отслеживает "горячие точки" (hot spots) — методы и циклы, которые выполняются чаще всего, — и компилирует только их.
 
-Преимуществом токого подхода является экономия ресурсов (не тратится время на компиляцию редко используемого кода). Чем дольше работает приложение, тем больше статистики (профиля) собирает JVM, что позволяет ей применять всё более продвинутые оптимизации. Единицей компиляции является метод или цикл, а результатом — nmethod (native method). 
+Преимуществом такого подхода является экономия ресурсов (не тратится время на компиляцию редко используемого кода). Чем дольше работает приложение, тем больше статистики (профиля) собирает JVM, что позволяет ей применять всё более продвинутые оптимизации. Единицей компиляции является метод или цикл, а результатом — nmethod (native method). 
 
 ### Многоуровневая компиляция (Tiered Compilation)
 
@@ -1243,7 +1305,7 @@ JVM не компилирует весь код сразу. Она отслеж�
 
 ### Code Cache
 
-Code Cache — cпециальная область памяти, где JVM хранит сгенерированный машинный код.
+Code Cache — специальная область памяти, где JVM хранит сгенерированный машинный код.
 
 Имеет ограниченный размер. Если кэш переполняется, JIT-компилятор отключается, и новый "горячий" код перестает компилироваться, оставаясь на медленном уровне интерпретации.
 
@@ -1415,7 +1477,7 @@ assertEquals("ВАСЯ", userProxy.getName());
 | Механизм | Рефлексия, создание анонимного класса, реализующего интерфейс. | Манипуляция байт-кодом (ASM), создание подкласса (наследника). |
 | Основное требование | Объект должен реализовывать интерфейс. | Интерфейс не обязателен. Может проксировать классы напрямую. |
 | Ограничение | Не может проксировать классы без интерфейсов. | Не может проксировать final классы и методы. |
-| Производительность | Исторически CGLIB был быстрее. Начиная с JDK 6-8, производительность JDK Proxy была значительно улучшена и часто превосходит CGLIB. | Производительность выще если больше запросов. |
+| Производительность | Исторически CGLIB был быстрее. Начиная с JDK 6-8, производительность JDK Proxy была значительно улучшена и часто превосходит CGLIB. | Производительность выше, если больше запросов. |
 | Использование в Spring | По умолчанию: если у бина есть интерфейс, используется JDK Proxy. | Если у бина нет интерфейса, используется CGLIB. Можно принудительно включить CGLIB через <aop:aspectj-autoproxy proxy-target-class="true"/>. |
 
 ---
@@ -1468,7 +1530,7 @@ assertEquals("ВАСЯ", userProxy.getName());
 В Java 8 появилось много готовых интерфейсов:
 - `Predicate<T>` — принимает T, возвращает boolean (для фильтрации);
 - `Function<T, R>` — принимает T, возвращает R (для преобразования);
-- `Supplier<T>` — мничего не принимает, возвращает T (для создания объектов);
+- `Supplier<T>` — ничего не принимает, возвращает T (для создания объектов);
 - `Consumer<T>` — принимает T, ничего не возвращает (void, для выполнения действий);
 - `Comparator<T>` — принимает (T, T), возвращает int (для сравнения).
 
