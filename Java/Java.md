@@ -1,4 +1,29 @@
 
+## История Java (8–25)
+
+| Версия | Год | Ключевые финальные фичи |
+|--------|-----|------------------------|
+| **8** | 2014 | Lambda, Stream API, Optional, `java.time`, default/static методы в интерфейсах |
+| **9** | 2017 | Модули Jigsaw, JShell, `List.of`/`Set.of`/`Map.of`, private interface methods |
+| **10** | 2018 | `var` (local variable type inference) |
+| **11** | 2018 | HTTP Client, новые методы `String` (`isBlank`, `lines`, `repeat`), `var` в лямбдах |
+| **12** | 2019 | Оптимизация |
+| **13** | 2019 | Оптимизация |
+| **14** | 2020 | Switch expressions, удалён CMS |
+| **15** | 2020 | Text blocks, hidden classes, ZGC production-ready, Shenandoah production-ready |
+| **16** | 2021 | Records, pattern matching `instanceof` |
+| **17** | 2021 | Sealed classes, strict floating-point |
+| **18** | 2022 | UTF-8 by default, Simple Web Server (`jwebserver`) |
+| **19** | 2022 | Оптимизация |
+| **20** | 2023 | Оптимизация |
+| **21** | 2023 | Virtual threads, pattern matching `switch`, sequenced collections, record patterns |
+| **22** | 2024 | Foreign Function & Memory API, unnamed variables & patterns, statements before `super(...)` |
+| **23** | 2024 | Оптимизация |
+| **24** | 2025 | Stream gatherers, Class-File API, scoped values, generational Shenandoah |
+| **25** | 2025 | Module import declarations, primitive types in patterns/switch, instance main methods |
+
+---
+
 ## ООП
 
 1. Наследование — абстрактный тип данных может наследовать данные и функциональность существующего типа, что способствует повторному использованию кода.

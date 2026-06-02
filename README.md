@@ -16,6 +16,9 @@ obsidian-vault/
 │   ├── DB-SQL.md            # SQL и реляционные БД
 │   ├── DB-ORM.md            # JPA / Hibernate
 │   ├── Architecture.md      # Архитектура и messaging
+│   ├── Reactive.md          # Реактивное программирование (WebFlux, Reactor, R2DBC)
+│   ├── Design-Patterns.md   # Паттерны проектирования в Spring-приложениях
+│   ├── Development-Process.md # Agile, Scrum, Kanban
 │   ├── DevOps.md            # DevOps инструменты
 │   ├── HTTP & Web.md        # Сети и веб
 │   ├── Testing.md           # Тестирование
