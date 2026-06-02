@@ -1,5 +1,72 @@
 
-## JPA и Hibernate
+## ORM (Object-Relational Mapping)
+
+ORM — технология, которая позволяет преобразовывать данные между реляционными БД и объектно-ориентированным кодом. В Java ORM используется для упрощения работы с базами данных, избегая прямого написания SQL и сокращая шаблонный код.
+
+**Принцип:** класс Java ↔ таблица БД, поля класса ↔ столбцы таблицы, объект ↔ строка.
+
+**Популярные реализации:** JPA / Hibernate, MyBatis.
+
+---
+
+## JPA (Java Persistence API)
+
+JPA — это **спецификация** Java EE/Java SE, описывающая систему управления сохранением Java-объектов в таблицы реляционных БД. Сама Java не содержит реализации JPA — это лишь набор интерфейсов и аннотаций.
+
+**Реализации JPA:**
+- **Hibernate** — самая популярная реализация, де-факто стандарт в Spring;
+- **EclipseLink** — референсная реализация от Oracle;
+- **OpenJPA** — Apache.
+
+**Основные составляющие JPA:**
+- **Entity** — класс, отображаемый на таблицу БД;
+- **EntityManager** — главный API для CRUD-операций;
+- **JPQL** — объектно-ориентированный язык запросов;
+- **Persistence Unit** — конфигурация подключения к БД (DataSource, диалект, настройки).
+
+---
+
+## Hibernate
+
+### Преимущества Hibernate перед JDBC
+
+| Критерий | Hibernate (JPA) | JDBC |
+|----------|----------------|------|
+| **Зависимость от БД** | Независим (диалекты) | Запросы специфичны для конкретной БД |
+| **SQL** | Генерируется автоматически (HQL/JPQL) | Пишется вручную |
+| **Пул соединений** | Интегрируется автоматически (HikariCP) | Создаётся вручную |
+| **Кэширование** | First/Second level cache | Отсутствует |
+| **Ленивая загрузка** | Поддерживается (Lazy Loading) | Реализуется вручную |
+| **Транзакции** | Управляются через `@Transactional` | Управляются вручную (`commit/rollback`) |
+| **Код** | Меньше шаблонного кода | Много бойлерплейта |
+
+### Требования к Entity (JPA-сущности)
+
+Класс может быть отображён на таблицу БД, если соблюдены следующие требования:
+
+1. **Аннотация `@Entity`** — помечает класс как JPA-сущность;
+2. **Публичный конструктор без параметров** — обязателен (default constructor);
+3. **Не должен быть `final`** — Hibernate использует прокси для ленивой загрузки;
+4. **Поля должны быть `private`/`protected`** с getter/setter (или использование `public` полей — не рекомендуется);
+5. **Поле с `@Id`** — первичный ключ обязателен;
+6. **Не должен быть enum или interface**.
+
+```java
+@Entity
+@Table(name = "users")
+public class User {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(nullable = false, length = 100)
+    private String name;
+
+    public User() {} // обязателен
+
+    // getters / setters
+}
+```
 
 ### EntityManager
 
@@ -41,6 +108,58 @@ stateDiagram-v2
 | **Detached** | Объект был персистентным, но сейчас не связан с сессией. Может стать персистентным через `merge()`. |
 | **Removed** | Объект помечен на удаление, будет удалён после `commit()`. |
 
+### Логирование SQL: spring.jpa.show-sql
+
+```yaml
+spring:
+  jpa:
+    show-sql: true           # выводит SQL в консоль (stderr/stdout)
+    properties:
+      hibernate:
+        format_sql: true     # красивое форматирование
+        use_sql_comments: true # добавляет комментарии с именем запроса
+```
+
+- `show-sql` — простой способ увидеть генерируемый Hibernate SQL;
+- Для production лучше использовать логгер (`logging.level.org.hibernate.SQL=DEBUG`) вместо `show-sql`.
+
+### Batch вставка (Bulk Insert)
+
+При массовой вставке десятков тысяч записей важно периодически сбрасывать буфер сессии, чтобы избежать переполнения памяти:
+
+```java
+Session session = sessionFactory.openSession();
+Transaction tx = session.beginTransaction();
+
+for (int i = 0; i < 100_000; i++) {
+    Customer customer = new Customer("Name" + i, "email" + i + "@example.com");
+    session.save(customer); // накапливается в first-level cache
+
+    if (i % 20 == 0) {
+        // Периодически вызываем flush() и clear() для оптимизации памяти
+        session.flush();  // синхронизирует накопленные изменения с БД
+        session.clear();    // очищает first-level cache
+    }
+}
+
+tx.commit(); // фиксирует оставшиеся изменения
+session.close();
+```
+
+**Настройки для batch-вставки в Spring Boot:**
+
+```yaml
+spring:
+  jpa:
+    properties:
+      hibernate:
+        jdbc:
+          batch_size: 20          # размер batch
+        order_inserts: true     # группировать INSERT по таблицам
+        order_updates: true     # группировать UPDATE по таблицам
+        generate_statistics: true # статистика для отладки
+```
+
 ### `load()` vs `get()`
 
 | Критерий | `get()` | `load()` |
@@ -57,6 +176,45 @@ stateDiagram-v2
 2. **Second-level cache** — отключён по умолчанию. Кэширует сущности между сессиями (на уровне `SessionFactory` / `EntityManagerFactory`).
 3. **Query cache** — отключён по умолчанию. Кэширует результаты запросов по ключу (SQL + параметры).
 
+**Включение Second-level cache:**
+
+```yaml
+spring:
+  jpa:
+    properties:
+      hibernate:
+        cache:
+          use_second_level_cache: true
+          region:
+            factory_class: org.hibernate.cache.jcache.JCacheRegionFactory
+```
+
+И на entity:
+
+```java
+@Entity
+@Cacheable
+@Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
+public class Product { ... }
+```
+
+**Включение Query cache:**
+
+```yaml
+spring:
+  jpa:
+    properties:
+      hibernate:
+        cache:
+          use_query_cache: true
+```
+
+```java
+@QueryHints({@QueryHint(name = "org.hibernate.cacheable", value = "true")})
+@Query("SELECT u FROM User u WHERE u.active = true")
+List<User> findActiveUsers();
+```
+
 **Очистка кэша сессии:**
 - `evict(entity)` — удаляет конкретную сущность из кэша;
 - `clear()` — очищает весь кэш сессии;
@@ -71,9 +229,26 @@ stateDiagram-v2
 | `@ManyToMany` | LAZY |
 | `@OneToOne` | EAGER |
 
+**Lazy Loading** — данные загружаются только при первом обращении к ним (лениво). Снижает initial load, но может привести к N+1.
+
+**Eager Loading** — данные загружаются сразу вместе с родительской сущностью. Увеличивает initial load, но уменьшает количество последующих запросов.
+
+---
+
+### N+1 vs Декартово произведение
+
 **Проблема N+1:**
-- Выполняется 1 запрос для получения родительских сущностей;
-- При доступе к ленивой коллекции выполняется N дополнительных запросов.
+- Выполняется 1 запрос для получения N родительских сущностей;
+- При доступе к ленивой коллекции каждой сущности выполняется отдельный запрос → всего 1 + N запросов.
+
+```java
+// 1 запрос: SELECT * FROM authors
+List<Author> authors = authorRepository.findAll();
+// N запросов: SELECT * FROM books WHERE author_id = ?
+for (Author a : authors) {
+    a.getBooks().size(); // каждый раз новый SELECT!
+}
+```
 
 **Решения N+1:**
 1. `JOIN FETCH` в JPQL — загружает связанные сущности одним запросом;
@@ -81,13 +256,81 @@ stateDiagram-v2
 3. Batch fetching — `@BatchSize(size = 50)`;
 4. `@EntityGraph` с `attributePaths` — разделение на 2 запроса (сначала IDs, потом сущности с графом).
 
-**Декартово произведение:**
-- Возникает при `JOIN FETCH` нескольких коллекций в одном запросе;
-- Либо при вытягивании нескольких коллекций как `EAGER`.
+**Проблема Декартова произведения:**
+- Возникает при `JOIN FETCH` **нескольких коллекций** в одном запросе;
+- Каждая комбинация элементов коллекций дублирует родительскую сущность в результате JOIN.
+
+```java
+// Author JOIN FETCH books JOIN FETCH reviews
+// Если у автора 3 книги и 2 отзыва → 3×2 = 6 строк на автора!
+// Hibernate загрузит 6 копий Author с разными комбинациями
+```
+
+**Отличия:**
+
+| Проблема | Причина | Проявление | Решение |
+|----------|---------|-----------|---------|
+| **N+1** | LAZY коллекция, доступ вне batch | 1 + N запросов | `JOIN FETCH`, Entity Graph, `@BatchSize` |
+| **Декартово произведение** | `JOIN FETCH` нескольких коллекций | Дублирование строк, раздувание результата | Разделить на 2 запроса, `@EntityGraph` с `attributePaths` |
+
+---
+
+### @ManyToMany — связь многие-ко-многим
+
+Реализуется через **промежуточную (junction/link) таблицу**, которая хранит пары PK из связываемых таблиц.
+
+**Entity:**
+
+```java
+@Entity
+public class Student {
+    @Id
+    private Long id;
+
+    @ManyToMany
+    @JoinTable(
+        name = "student_course",              // имя junction-таблицы
+        joinColumns = @JoinColumn(name = "student_id"),
+        inverseJoinColumns = @JoinColumn(name = "course_id")
+    )
+    private Set<Course> courses = new HashSet<>();
+}
+
+@Entity
+public class Course {
+    @Id
+    private Long id;
+
+    @ManyToMany(mappedBy = "courses")
+    private Set<Student> students = new HashSet<>();
+}
+```
+
+**В БД:**
+
+```sql
+CREATE TABLE student (
+    id BIGINT PRIMARY KEY,
+    name VARCHAR(100)
+);
+
+CREATE TABLE course (
+    id BIGINT PRIMARY KEY,
+    title VARCHAR(100)
+);
+
+CREATE TABLE student_course (
+    student_id BIGINT REFERENCES student(id),
+    course_id BIGINT REFERENCES course(id),
+    PRIMARY KEY (student_id, course_id)
+);
+```
+
+**Важно:** для добавления полей в junction-таблицу (например, `enrolled_at`) лучше заменить `@ManyToMany` на две `@OneToMany` + явную entity для junction-таблицы.
 
 ### JPQL (Java Persistence Query Language)
 
-JPQL использует имена классов Entity и их атрибуты вместо имён таблиц и колонок:
+JPQL — язык запросов, практически такой же как SQL, но вместо имён таблиц и колонок БД использует **имена Entity-классов и их атрибутов**. Параметры запросов — Java-типы, а не SQL-типы.
 
 ```java
 // Вместо SQL: SELECT * FROM users WHERE age > ?
@@ -98,10 +341,62 @@ query.setParameter("age", 18);
 List<User> users = query.getResultList();
 ```
 
-Отличия от SQL:
-- Автоматический полиморфизм (запрос к суперклассу вернёт и подклассы);
-- Функции `KEY()`, `VALUE()`, `ENTRY()` для Map;
-- `TREAT()` для downcasting.
+**Отличия от SQL:**
+- **Автоматический полиморфизм** — запрос к суперклассу вернёт и все подклассы:
+  ```java
+  // Вернёт Employee, Manager, Developer — все наследники Person
+  em.createQuery("SELECT p FROM Person p", Person.class).getResultList();
+  ```
+- **Функции для Map:**
+  - `KEY(m)` — ключ Map;
+  - `VALUE(m)` — значение Map;
+  - `ENTRY(m)` — пара ключ-значение;
+- **`TREAT()`** — downcasting (приведение суперкласса к подклассу):
+  ```java
+  // Выбираем только Manager и обращаемся к полю department
+  "SELECT m FROM Person p WHERE TREAT(p AS Manager).department = :dept"
+  ```
+
+---
+
+### QueryDSL
+
+QueryDSL — типобезопасный фреймворк для построения SQL/JPQL-запросов в Java-коде. Альтернатива строковым запросам, устраняет ошибки во время компиляции.
+
+**Преимущества:**
+- Типобезопасность — ошибки в именах полей ловятся на этапе компиляции;
+- Автодополнение IDE;
+- Читаемость — запрос строится через fluent API;
+- Работает с JPA, MongoDB, SQL, Lucene.
+
+**Пример (сравнение JPQL vs QueryDSL):**
+
+```java
+// JPQL (строковый запрос)
+em.createQuery("SELECT u FROM User u WHERE u.age > :age AND u.status = :status", User.class)
+  .setParameter("age", 18)
+  .setParameter("status", UserStatus.ACTIVE)
+  .getResultList();
+
+// QueryDSL (типобезопасный)
+QUser user = QUser.user;
+List<User> users = new JPAQueryFactory(em)
+    .selectFrom(user)
+    .where(user.age.gt(18), user.status.eq(UserStatus.ACTIVE))
+    .fetch();
+```
+
+**Использование с Spring Data:**
+
+```java
+public interface UserRepository extends JpaRepository<User, Long>, QuerydslPredicateExecutor<User> {
+}
+
+// В сервисе:
+QUser user = QUser.user;
+Predicate predicate = user.age.gt(18).and(user.name.startsWithIgnoreCase("A"));
+Iterable<User> result = repository.findAll(predicate);
+```
 
 ### `@EntityGraph`
 
@@ -201,6 +496,23 @@ Optional<Product> findByIdForUpdate(@Param("id") Long id);
 
 `LazyInitializationException` возникает при попытке доступа к ленивой ассоциации вне контекста persistence (после закрытия `EntityManager` / `Session` или `Transaction`).
 
+**Пример:**
+
+```java
+@Service
+public class OrderService {
+    public Order getOrder(Long id) {
+        // Транзакция закрывается при выходе из метода
+        return orderRepository.findById(id).orElseThrow();
+    }
+}
+
+// В контроллере (вне транзакции):
+Order order = orderService.getOrder(1L);
+order.getItems().size(); // LazyInitializationException!
+// Коллекция items не была загружена, а сессия уже закрыта
+```
+
 **Причины:**
 - Доступ к `@OneToMany(fetch = LAZY)` после закрытия сессии;
 - Сериализация entity с неинициализированной коллекцией и последующий доступ;
@@ -212,6 +524,92 @@ Optional<Product> findByIdForUpdate(@Param("id") Long id);
 3. `@Transactional` на методе сервиса, который возвращает entity (не на контроллере);
 4. DTO-проекции вместо возврата Entity;
 5. `OpenEntityManagerInViewFilter` / `OpenSessionInView` — антипаттерн, маскирует проблему.
+
+---
+
+### `@Fetch` (Hibernate)
+
+`@Fetch` определяет **стратегию загрузки** коллекции/ассоциации (как Hibernate будет извлекать связанные данные). Отличается от `FetchType.LAZY/EAGER` (который задаёт **когда** загружать).
+
+| FetchMode | Описание | Пример |
+|-----------|----------|--------|
+| `FetchMode.SELECT` | Отдельный `SELECT` для каждой коллекции (N+1 при EAGER) | `@Fetch(FetchMode.SELECT)` |
+| `FetchMode.JOIN` | `OUTER JOIN` в основном запросе (1 запрос) | `@Fetch(FetchMode.JOIN)` |
+| `FetchMode.SUBSELECT` | Один `SELECT` для всех коллекций всех загруженных родителей | `@Fetch(FetchMode.SUBSELECT)` |
+
+```java
+@Entity
+public class Author {
+    @OneToMany(fetch = FetchType.EAGER)
+    @Fetch(FetchMode.JOIN) // загружаем books через JOIN
+    private List<Book> books;
+}
+```
+
+- `JOIN` — лучшее решение для избежания N+1 при EAGER;
+- `SUBSELECT` — эффективен при batch-загрузке: сначала загружаются авторы, потом один запрос на все их книги.
+
+---
+
+### JPA Event Listeners
+
+JPA позволяет автоматически выполнять код на различных этапах жизненного цикла сущности:
+
+| Аннотация | Когда вызывается |
+|-----------|---------------|
+| `@PrePersist` | Перед `persist()` / `save()` (INSERT) |
+| `@PostPersist` | После `persist()` / `save()` (INSERT) |
+| `@PreUpdate` | Перед обновлением (UPDATE) |
+| `@PostUpdate` | После обновления (UPDATE) |
+| `@PreRemove` | Перед удалением (DELETE) |
+| `@PostRemove` | После удаления (DELETE) |
+| `@PostLoad` | После загрузки из БД (SELECT) |
+
+**Пример: автоматическая аудита createdAt / updatedAt**
+
+```java
+@Entity
+@EntityListeners(AuditListener.class)
+public class Order {
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
+    // ...
+}
+
+public class AuditListener {
+    @PrePersist
+    public void prePersist(Object entity) {
+        if (entity instanceof Auditable) {
+            ((Auditable) entity).setCreatedAt(LocalDateTime.now());
+            ((Auditable) entity).setUpdatedAt(LocalDateTime.now());
+        }
+    }
+
+    @PreUpdate
+    public void preUpdate(Object entity) {
+        if (entity instanceof Auditable) {
+            ((Auditable) entity).setUpdatedAt(LocalDateTime.now());
+        }
+    }
+}
+```
+
+**Альтернатива — встроенные аннотации внутри entity:**
+
+```java
+@Entity
+public class Order {
+    @PrePersist
+    public void onCreate() {
+        createdAt = LocalDateTime.now();
+    }
+
+    @PreUpdate
+    public void onUpdate() {
+        updatedAt = LocalDateTime.now();
+    }
+}
+```
 
 ---
 
